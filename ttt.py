@@ -4,6 +4,12 @@ import random
 # A game of Tic-Tac-Toe
 # Assumes that X goes first.
 
+#GenerateMove will return all of the moves in a list
+#Think about a way to either have a generic undo move
+#or do something clever when it comes to storing children
+#on our map downwards
+
+
 def drawBoard(board):
     """
     Draws board starting from top left to bottom right with index starting at 0
