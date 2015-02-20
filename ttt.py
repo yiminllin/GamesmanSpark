@@ -8,7 +8,7 @@ def drawBoard(board):
     """
     Draws board starting from top left to bottom right with index starting at 0
     """
-    print('===========================')
+    print('\n' + '===========================' + '\n')
     print('  1   2   3')
     print('    |   |')
     print('1 ' + board[0] + ' | ' + board[1] + ' | ' + board[2])
