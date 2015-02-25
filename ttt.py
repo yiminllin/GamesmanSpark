@@ -5,6 +5,26 @@ import random
 # Assumes that X goes first.
 
 #GenerateMove will return all of the moves in a list
+#Do we have to only make valid moves?
+def generateMove(board):
+    dataOnBoard = getNumPieces(board)
+    if dataOnBoard[0] > dataOnBoard[1]:
+        pieceToAdd = 'o'
+    else:
+        pieceToAdd = 'x'
+    retList = []
+    for i in range(8):
+        if board[i] == ' ':
+            dummyList = []
+            for charac in board:
+                dummyList.append(charac)
+            dummyList[i] = pieceToAdd
+            retList.append(dummyList)
+    return retList
+
+
+
+
 #Think about a way to either have a generic undo move
 #or do something clever when it comes to storing children
 #on our map downwards
@@ -171,6 +191,16 @@ def main():
     # human vs human
     # human vs computer
     # computer vs human
+
+    #Testing to see if generateMove worked. It did with no
+    #entires, with entry x, and with entries x and o
+    # boardTest = initiateBoard(3)
+    # boardTest[0] = 'x'
+    # boardTest[8] = 'o'
+    # listOfPossMoves = generateMove(boardTest)
+    # print(listOfPossMoves)
+
+
     first_player = args[0]
     second_player = args[1]
     n = 3
