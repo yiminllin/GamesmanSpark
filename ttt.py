@@ -187,6 +187,9 @@ def getPlayerMove(n):
     index = (row - 1) * n + (column - 1)
     return index
 
+def run_tests():
+    print "Need to write tests...or we can use doctests"
+    return True
 
 def main():
     args = sys.argv[1:] # just want the arguments after python ttt.py
@@ -259,7 +262,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-def run_tests():
-    print "Need to write tests...or we can use doctests"
-    return True
