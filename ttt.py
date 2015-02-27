@@ -13,7 +13,7 @@ def generateMove(board):
     else:
         pieceToAdd = 'x'
     retList = []
-    for i in range(8):
+    for i in range(9):
         if board[i] == ' ':
             dummyList = []
             for charac in board:
