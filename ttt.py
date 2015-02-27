@@ -22,8 +22,16 @@ def generateMove(board):
             retList.append(dummyList)
     return retList
 
-
-
+def generateAllMoves(board):
+    """
+    Generates all possible moves starting from this board and ON until end
+    """
+    boardsList = []
+    boards = generateMove(board)
+    boardsList.append(boards)
+    if len(boards) > 1:
+        boardsList.append([generateAllMoves(b) for b in boards])
+    return boardsList
 
 #Think about a way to either have a generic undo move
 #or do something clever when it comes to storing children
