@@ -5,7 +5,6 @@ import random
 # Assumes that X goes first.
 
 #GenerateMove will return all of the moves in a list
-#Do we have to only make valid moves?
 def generateMove(board):
     dataOnBoard = getNumPieces(board)
     if dataOnBoard[0] > dataOnBoard[1]:
@@ -13,7 +12,7 @@ def generateMove(board):
     else:
         pieceToAdd = 'x'
     retList = []
-    for i in range(8):
+    for i in range(n):
         if board[i] == ' ':
             dummyList = []
             for charac in board:
@@ -194,16 +193,18 @@ def main():
 
     #Testing to see if generateMove worked. It did with no
     #entires, with entry x, and with entries x and o
+
+
+    first_player = args[0]
+    second_player = args[1]
+    n = 3
+
     # boardTest = initiateBoard(3)
     # boardTest[0] = 'x'
     # boardTest[8] = 'o'
     # listOfPossMoves = generateMove(boardTest)
     # print(listOfPossMoves)
 
-
-    first_player = args[0]
-    second_player = args[1]
-    n = 3
     board = initiateBoard(n)
     game_is_active = True
     need_move = False
