@@ -21,8 +21,16 @@ def generateMove(board):
             retList.append(dummyList)
     return retList
 
-
-
+def generateAllMoves(board):
+    """
+    Generates all possible moves starting from this board and ON until end
+    """
+    boardsList = []
+    boards = generateMove(board)
+    boardsList.append(boards)
+    if len(boards) > 1:
+        boardsList.append([generateAllMoves(b) for b in boards])
+    return boardsList
 
 #Think about a way to either have a generic undo move
 #or do something clever when it comes to storing children
@@ -82,17 +90,13 @@ def isValidMove(board, current_player, index, undo=False):
     else: # checking if a move made on board is valid
         # doublecheck we have correct number of pieces
         if (current_player == 0) and (num_x != num_o):
-            print "Invalid 1"
             return False
         elif (current_player == 1) and ((num_x - 1) != num_o):
-            print "Invalid 2"
             return False
         elif num_blank == 0:
-            print "Invalid 3"
             return False
         # checking if move we are trying to make is already filled
         if board[index] != ' ':
-            print "Invalid 4"
             return False
     return True
 
@@ -182,10 +186,14 @@ def getPlayerMove(n):
     index = (row - 1) * n + (column - 1)
     return index
 
+def run_tests():
+    print "Need to write tests...or we can use doctests"
+    return True
 
 def main():
     args = sys.argv[1:] # just want the arguments after python ttt.py
     assert(len(args)) == 2
+    assert run_tests() == True
     # allowed modes:
     # human vs human
     # human vs computer
@@ -205,6 +213,10 @@ def main():
     # listOfPossMoves = generateMove(boardTest)
     # print(listOfPossMoves)
 
+
+    first_player = args[0]
+    second_player = args[1]
+    n = 3
     board = initiateBoard(n)
     game_is_active = True
     need_move = False
@@ -225,10 +237,12 @@ def main():
                     if boardStatus(board, current_player) == 0:
                         print "You just won!"
                         game_is_active = not game_is_active
+                        drawBoard(board)
                         break
                     elif isBoardFull(board):
                         print "You have tied!"
                         game_is_active = not game_is_active
+                        drawBoard(board)
                         break
                     current_player = 1 - current_player
                 elif current_player == 1:
@@ -241,10 +255,12 @@ def main():
                     if boardStatus(board, current_player) == 0:
                         print "You just lost!"
                         game_is_active = not game_is_active
+                        drawBoard(board)
                         break
                     elif isBoardFull(board):
                         print "You have tied!"
                         game_is_active = not game_is_active
+                        drawBoard(board)
                         break
                     current_player = 1 - current_player
                 drawBoard(board)
