@@ -187,7 +187,7 @@ def getPlayerMove(n):
     return index
 
 def run_tests():
-    print "Need to write tests...or we can use doctests"
+    #"Need to write tests...or we can use doctests"
     return True
 
 def main():
@@ -233,14 +233,14 @@ def main():
                             makeMove(board, current_player, move)
                             need_move = not need_move
                         else:
-                            print "Invalid move. Enter again."
+                            print("Invalid move. Enter again.")
                     if boardStatus(board, current_player) == 0:
-                        print "You just won!"
+                        print("You just won!")
                         game_is_active = not game_is_active
                         drawBoard(board)
                         break
                     elif isBoardFull(board):
-                        print "You have tied!"
+                        print("You have tied!")
                         game_is_active = not game_is_active
                         drawBoard(board)
                         break
@@ -253,12 +253,12 @@ def main():
                             makeMove(board, current_player, move)
                             need_move = not need_move
                     if boardStatus(board, current_player) == 0:
-                        print "You just lost!"
+                        print("You just lost!")
                         game_is_active = not game_is_active
                         drawBoard(board)
                         break
                     elif isBoardFull(board):
-                        print "You have tied!"
+                        print("You have tied!")
                         game_is_active = not game_is_active
                         drawBoard(board)
                         break
