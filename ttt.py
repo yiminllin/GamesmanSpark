@@ -5,19 +5,19 @@ import random
 # Assumes that X goes first.
 
 #GenerateMove will return all of the moves in a list
-def generateMove(board):
+def generateMove(board, n):
     dataOnBoard = getNumPieces(board)
     if dataOnBoard[0] > dataOnBoard[1]:
         pieceToAdd = 'o'
     else:
         pieceToAdd = 'x'
     retList = []
-    for i in range(n):
+    for i in range(n * n):
         if board[i] == ' ':
-            dummyList = []
+            dummyList = [[], board]
             for charac in board:
-                dummyList.append(charac)
-            dummyList[i] = pieceToAdd
+                dummyList[0].append(charac)
+            dummyList[0][i] = pieceToAdd
             retList.append(dummyList)
     return retList
 
