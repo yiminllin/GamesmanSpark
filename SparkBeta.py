@@ -32,6 +32,8 @@ def bfs_reduce(value1, value2):
             allParents.append(tuple(eachParent))
         return (value2[0], tuple(allParents))
 
+def myPrim(value):
+    return isPrimitive(value[0])
 
 def printFunction(rdd, fName):
     #Running through the list and formatting it as level and then board set
@@ -59,10 +61,12 @@ def main():
         boardLevel += 1
         rdd += done
 
+    allPrimRDD = rdd.filter(myPrim)
     
     # #printFunction(finishedLevel, "test.txt")
     # #Figure out why this one crashes
     printFunction(rdd, "output.txt")
+    printFunction(allPrimRDD, "primitives.txt")
 
 
 
