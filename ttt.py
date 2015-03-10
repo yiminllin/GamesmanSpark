@@ -14,12 +14,47 @@ def generateMove(board, n):
     retList = []
     for i in range(n * n):
         if board[i] == ' ':
-            dummyList = [[], board]
+            dummyList = []
             for charac in board:
-                dummyList[0].append(charac)
-            dummyList[0][i] = pieceToAdd
+                dummyList.append(charac)
+            dummyList[i] = pieceToAdd
             retList.append(dummyList)
     return retList
+
+def isPrimitive(board):
+    dataOnBoard = getNumPieces(board)
+    if dataOnBoard[0] + dataOnBoard[1] == 9:
+        return True
+    elif dataOnBoard[0] < 3:
+        return False
+    else:
+        if board[0] != ' ':
+            if board[0] == board[1] and board[0] == board[2]:
+                return True
+            elif board[0] == board[3] and board[3] == board[6]:
+                return True
+            elif board[0] == board[4] and board[0] == board[8]:
+                return True
+        
+        if board[2] != ' ':
+            if board[2] == board[5] and board[2] == board[8]:
+                return True
+            elif board[2] == board[4] and board[2] == board[6]:
+                return True
+        
+        if board[1] != ' ':
+            if board[1] == board[4] and board[1] == board[7]:
+                return True
+        
+        if board[3] != ' ':
+            if board[3] == board[4] and board[3] == board[5]:
+                return True
+        
+        if board[6] != ' ':
+            if board[6] == board[7] and board[6] == board[8]:
+                return True
+        return False
+
 
 def generateAllMoves(board):
     """

@@ -6,11 +6,11 @@ SOLVER=SparkBeta.py
 default: beta
 
 beta:
-	rm -rf text.txt
+	rm -rf output.txt
 	PYTHONWARNINGS="ignore" time spark-submit $(SOLVER) --master=$(MASTER)
 
 test:
-		PYTHONWARNINGS="ignore" time spark-submit als.py
+		PYTHONWARNINGS="ignore" time spark-submit SparkTest.py
 
 clean:
 	rm -rf *.pyc

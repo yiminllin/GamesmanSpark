@@ -1,37 +1,69 @@
 from pyspark import SparkContext
-from ttt import initiateBoard, generateMove
+from ttt import initiateBoard, generateMove, isPrimitive
 
 n = 3
 
 def bfs_map(value):
-    children = generateMove(value[0], n)
-    return children
+    retVal = []
+    if value[1][0] == boardLevel and not isPrimitive(value[0]):
+        children = generateMove(value[0], n)
+
+        for child in children:
+            parentTuple = [boardLevel + 1, tuple( [tuple(value[0])] )]
+            childTuple = [tuple(child), tuple(parentTuple)]
+
+            retVal.append(tuple(childTuple))
+
+    return retVal
 
 def bfs_reduce(value1, value2):
-    return ' '
+    if value1[0] <= value2[0]:
+        allParents = []
+        for eachParent in value1[1]:
+            allParents.append(tuple(eachParent))
+        for eachParent in value2[1]:
+            allParents.append(tuple(eachParent))
+        return (value1[0], tuple(allParents))
+    else:
+        allParents = []
+        for eachParent in value1[1]:
+            allParents.append(tuple(eachParent))
+        for eachParent in value2[1]:
+            allParents.append(tuple(eachParent))
+        return (value2[0], tuple(allParents))
 
 
 def printFunction(rdd, fName):
-    output_file = open(fName, "w")
-    writer = lambda line: output_file.write(str(line) + "\n")
-    compile_together = rdd.collect()
     #Running through the list and formatting it as level and then board set
-    for elem in compile_together:
-        writer(str(elem[1]) + " " + str(elem[0]))
+    outputFile = open(fName, "w")
+    writer = lambda line: outputFile.write(str(line) + "\n")
+    compiledArr = rdd.collect()
+
+    for elem in compiledArr:
+        writer(elem)
 
 def main():
-    print("Hey")
+    global boardLevel
+    boardLevel = 0
     sc = SparkContext("local[1]", "python")
 
     blankBoard = initiateBoard(n)
 
-    rdd = [[blankBoard, None]]
+    rdd = [(tuple(blankBoard), (boardLevel, ()))]
     rdd = sc.parallelize(rdd)
 
-    # finishedLevel = rdd.flatMap(bfs_map)
-    # rdd += finishedLevel
 
-    printFunction(rdd, "test.txt")
+    for _ in range(9):
+        finishedLevel = rdd.flatMap(bfs_map)
+        done = finishedLevel.reduceByKey(bfs_reduce)
+        boardLevel += 1
+        rdd += done
+
+    
+    # #printFunction(finishedLevel, "test.txt")
+    # #Figure out why this one crashes
+    printFunction(rdd, "output.txt")
+
 
 
 if __name__ == "__main__":
