@@ -25,7 +25,7 @@ def isPrimitive(board):
     dataOnBoard = getNumPieces(board)
     if dataOnBoard[0] + dataOnBoard[1] == 9:
         return True
-    elif dataOnBoard[0] < 3:
+    if dataOnBoard[0] < 3:
         return False
     else:
         if board[0] != ' ':
@@ -54,6 +54,33 @@ def isPrimitive(board):
             if board[6] == board[7] and board[6] == board[8]:
                 return True
         return False
+
+def winner(board):
+    if board[0] != ' ':
+            if board[0] == board[1] and board[0] == board[2]:
+                return board[0]
+            elif board[0] == board[3] and board[3] == board[6]:
+                return board[0]
+            elif board[0] == board[4] and board[0] == board[8]:
+                return board[0]
+    if board[2] != ' ':
+        if board[2] == board[5] and board[2] == board[8]:
+            return board[2]
+        elif board[2] == board[4] and board[2] == board[6]:
+            return board[2]
+    
+    if board[1] != ' ':
+        if board[1] == board[4] and board[1] == board[7]:
+            return board[1]
+    
+    if board[3] != ' ':
+        if board[3] == board[4] and board[3] == board[5]:
+            return board[3]
+    
+    if board[6] != ' ':
+        if board[6] == board[7] and board[6] == board[8]:
+            return board[6]
+    return 't'
 
 
 def generateAllMoves(board):
@@ -226,7 +253,9 @@ def run_tests():
     return True
 
 def main():
-    args = sys.argv[1:] # just want the arguments after python ttt.py
+    theirInput = raw_input("Type human or computer as your competitor: ")
+    args = ["human", theirInput]
+    # args = sys.argv[1:] # just want the arguments after python ttt.py
     assert(len(args)) == 2
     assert run_tests() == True
     # allowed modes:
@@ -236,11 +265,6 @@ def main():
 
     #Testing to see if generateMove worked. It did with no
     #entires, with entry x, and with entries x and o
-
-
-    first_player = args[0]
-    second_player = args[1]
-    n = 3
 
     # boardTest = initiateBoard(3)
     # boardTest[0] = 'x'
