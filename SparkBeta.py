@@ -1,33 +1,123 @@
 from pyspark import SparkContext
-from TicTacToe.ttt import initiateBoard, generateMove, isPrimitive, winner
+from TicTacToe.ttt import initiateBoard, generateMove, isPrimitive, winner, isEmpty
 
 n = 3
+
+def opposite(letter):
+    if letter == 'w':
+        return 'l'
+    if letter == 'l':
+        return 'w'
+    return letter
+
 
 """
 Assigning all the wins/loses
 """
 def traceBackUpMap(value):
-    return value
+    retVal = []
+    if remoteness != 0:
+        if remoteness == value[1][0]:
+            if not isEmpty(value[0]):
+                parents = value[1][2]
+
+                for parent in parents:
+                    boardInformation = [remoteness + 1, opposite(value[1][0]), ()]
+                    parentTuple = [parent, tuple(boardInformation)]
+
+                    retVal.append(tuple(parentTuple))
+        else:
+            retVal.append(value)
+    else:
+        if remoteness == value[1][1]:
+            if not isEmpty(value[0]):
+                parents = value[1][2]
+
+                tempTuple = [value[0], []]
+                retVal.append(value)
+
+                for parent in parents:
+                    boardInformation = ['w', remoteness + 1, ()]
+                    parentTuple = [parent, tuple(boardInformation)]
+
+                    retVal.append(tuple(parentTuple))
+
+        else:
+            retVal.append(value)
+
+    return retVal
+
+def traceBackUpReduce(value1, value2):
+    if type(value1[0]) is int:
+        parentLst = []
+        value1List = value1[1]
+        for val in value1List:
+            parentLst.append(val)
+        value2List = value2[2]
+        for val in value2List:
+            parentLst.append(val)
+        tempTuple = (value2[0], value2[1], tuple(parentLst))
+        return tempTuple
+    elif type(value2[0]) is int:
+        parentLst = []
+        value2List = value2[1]
+        for val in value2List:
+            parentLst.append(val)
+        value1List = value1[2]
+        for val in value1List:
+            parentLst.append(val)
+        tempTuple = (value1[0], value1[1], tuple(parentLst))
+        return tempTuple
+    else:
+        parentLst = []
+        value1List = value1[2]
+        for val in value1List:
+            parentLst.append(val)
+        value2List = value2[2]
+        for val in value2List:
+            parentLst.append(val)
+
+        boardState = ''
+        if value2[0] == 'w' or value1[0] == 'w':
+            boardState = 'w'
+        else:
+            boardState = 'l'
+        remote = 1000
+        if value2[1] < value1[1]:
+            remote = value2[1]
+        else:
+            remote = value1[1]
+        tempTuple = (boardState, remote, tuple(parentLst))
+        return tempTuple
+
+
 
 """
 Figure out the win/lose idea
 """
 def primitiveWinOrLoseMap(value):
-    return tuple([(value[0], winner(value[0]))])
+    return tuple([(value[0], tuple([winner(value[0]), value[1][1]]))])
 
 """
 Getting all the primitives
 """
 def bfsMap(value):
-    retVal = [value]
-    if value[1][0] == boardLevel and not isPrimitive(value[0]):
-        children = generateMove(value[0], n)
+    retVal = []
+    if value[1][0] == boardLevel:
+        if not isPrimitive(value[0]):
+            children = generateMove(value[0], n)
 
-        for child in children:
-            parentTuple = [boardLevel + 1, tuple( [tuple(value[0])] )]
-            childTuple = [tuple(child), tuple(parentTuple)]
+            for child in children:
+                parentTuple = [boardLevel + 1, tuple( [tuple(value[0])] )]
+                childTuple = [tuple(child), tuple(parentTuple)]
 
-            retVal.append(tuple(childTuple))
+                retVal.append(tuple(childTuple))
+            retVal.append(value)
+        else:
+            tempTuple = tuple([value[0], tuple([winner(value[0]), 0, value[1][1]])])
+            retVal.append(tempTuple)
+    else:
+        retVal.append(value)
     return retVal
 
 def bfsReduce(value1, value2):
@@ -96,8 +186,14 @@ def main():
     printBFSFunction(rdd, "Results/output.txt")
     printBFSFunction(allPrimRDD, "Results/primitives.txt")
 
+    global remoteness
+    remoteness = 0
     testing = allPrimRDD.flatMap(primitiveWinOrLoseMap)
-    printTraceBackFunction(testing, "Results/testing.txt")
+
+    rdd = rdd.flatMap(traceBackUpMap)
+    rdd = rdd.reduceByKey(traceBackUpReduce)
+
+    printTraceBackFunction(rdd, "Results/testing.txt")
 
 
 

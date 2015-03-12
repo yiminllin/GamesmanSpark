@@ -82,6 +82,9 @@ def winner(board):
             return board[6]
     return 't'
 
+def isEmpty(board):
+    return [' '] * 9 == board
+
 
 def generateAllMoves(board):
     """
