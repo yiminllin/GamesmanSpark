@@ -17,12 +17,14 @@ Assigning all the wins/loses
 def traceBackUpMap(value):
     retVal = []
     if remoteness != 0:
-        if remoteness == value[1][0]:
+        if remoteness == value[1][1]:
             if not isEmpty(value[0]):
                 parents = value[1][2]
 
+                retVal.append(value)
+
                 for parent in parents:
-                    boardInformation = [remoteness + 1, opposite(value[1][0]), ()]
+                    boardInformation = [opposite(value[1][0]), remoteness + 1, ()]
                     parentTuple = [parent, tuple(boardInformation)]
 
                     retVal.append(tuple(parentTuple))
@@ -48,7 +50,7 @@ def traceBackUpMap(value):
     return retVal
 
 def traceBackUpReduce(value1, value2):
-    if type(value1[0]) is int:
+    if type(value1[0]) is int and type(value2[0]) is str:
         parentLst = []
         value1List = value1[1]
         for val in value1List:
@@ -58,7 +60,7 @@ def traceBackUpReduce(value1, value2):
             parentLst.append(val)
         tempTuple = (value2[0], value2[1], tuple(parentLst))
         return tempTuple
-    elif type(value2[0]) is int:
+    elif type(value2[0]) is int and type(value1[0]) is str:
         parentLst = []
         value2List = value2[1]
         for val in value2List:
@@ -68,6 +70,20 @@ def traceBackUpReduce(value1, value2):
             parentLst.append(val)
         tempTuple = (value1[0], value1[1], tuple(parentLst))
         return tempTuple
+    # elif type(value2[0]) is int and type(value1[0]) is int:
+    #     parentLst = []
+    #     value2List = value2[1]
+    #     for val in value2List:
+    #         parentLst.append(val)
+    #     value1List = value1[1]
+    #     for val in value1List:
+    #         parentLst.append(val)
+    #     lvl = 1000
+    #     if value1[0] < value2[0]:
+    #         lvl = value1[0]
+    #     else:
+    #         lvl = value2[0]
+    #     return (lvl, tuple(parentLst))
     else:
         parentLst = []
         value1List = value1[2]
@@ -153,13 +169,16 @@ def printTraceBackFunction(rdd, fName):
     outputFile = open(fName, "w")
     writer = lambda line: outputFile.write(str(line) + "\n")
     compiledArr = rdd.collect()
-    compiledArr = sorted(compiledArr, key = lambda value: value[1])
+    compiledArr = sorted(compiledArr, key = lambda value: value[1][1])
 
     for elem in compiledArr:
         writer(elem)
 
 def relevantSet(value):
     return value[1][0] == boardLevel
+
+def relevantRemote(value):
+    return value[1][1] == remoteness
 
 def main():
     global boardLevel
@@ -190,8 +209,13 @@ def main():
     remoteness = 0
     testing = allPrimRDD.flatMap(primitiveWinOrLoseMap)
 
-    rdd = rdd.flatMap(traceBackUpMap)
-    rdd = rdd.reduceByKey(traceBackUpReduce)
+    num = 1
+
+    while num:
+        rdd = rdd.flatMap(traceBackUpMap)
+        rdd = rdd.reduceByKey(traceBackUpReduce)
+        num = rdd.filter(relevantRemote).collect()
+        remoteness += 1
 
     printTraceBackFunction(rdd, "Results/testing.txt")
 
