@@ -10,7 +10,7 @@ To make place your piece in the top middle you would type '12'.
 
 
 
-README for SparkBeta
+README for SparkSolver
 
 To test if you properly can run spark, enter
 'make test' on the terminal.

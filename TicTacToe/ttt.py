@@ -5,14 +5,14 @@ import random
 # Assumes that X goes first.
 
 #GenerateMove will return all of the moves in a list
-def generateMove(board, n):
-    dataOnBoard = getNumPieces(board)
+def generateMove(board, width = 3, height = 3):
+    dataOnBoard = getNumPieces(board, width * height)
     if dataOnBoard[0] > dataOnBoard[1]:
         pieceToAdd = 'o'
     else:
         pieceToAdd = 'x'
     retList = []
-    for i in range(n * n):
+    for i in range(width * height):
         if board[i] == ' ':
             dummyList = []
             for charac in board:
@@ -21,8 +21,9 @@ def generateMove(board, n):
             retList.append(dummyList)
     return retList
 
-def isPrimitive(board):
-    dataOnBoard = getNumPieces(board)
+#Work on getting this to work for square tictactoe of arbitrary size
+def isPrimitive(board, width = 3, height = 3):
+    dataOnBoard = getNumPieces(board, width, height)
     if dataOnBoard[0] + dataOnBoard[1] == 9:
         return True
     if dataOnBoard[0] < 3:
@@ -55,35 +56,36 @@ def isPrimitive(board):
                 return True
         return False
 
-def winner(board):
+#Work on trying to make this work on arbitrary size
+def tie(board, width = 3, height = 3):
     if board[0] != ' ':
             if board[0] == board[1] and board[0] == board[2]:
-                return board[0]
+                return 'l'
             elif board[0] == board[3] and board[3] == board[6]:
-                return board[0]
+                return 'l'
             elif board[0] == board[4] and board[0] == board[8]:
-                return board[0]
+                return 'l'
     if board[2] != ' ':
         if board[2] == board[5] and board[2] == board[8]:
-            return board[2]
+            return 'l'
         elif board[2] == board[4] and board[2] == board[6]:
-            return board[2]
+            return 'l'
     
     if board[1] != ' ':
         if board[1] == board[4] and board[1] == board[7]:
-            return board[1]
+            return 'l'
     
     if board[3] != ' ':
         if board[3] == board[4] and board[3] == board[5]:
-            return board[3]
+            return 'l'
     
     if board[6] != ' ':
         if board[6] == board[7] and board[6] == board[8]:
-            return board[6]
+            return 'l'
     return 't'
 
-def isEmpty(board):
-    return [' '] * 9 == board
+def isEmpty(board, width = 3, height = 3):
+    return [' '] * (width * height) == board
 
 
 def generateAllMoves(board):
@@ -126,13 +128,13 @@ def getPlayerLetter(player):
     """ 
     return 'x' if player == 0 else 'o'
 
-def getNumPieces(board):
+def getNumPieces(board, width = 3, height = 3):
     num_x = board.count('x')
     num_o = board.count('o')
-    return (num_x, num_o, 9 - num_x - num_o)
+    return (num_x, num_o, (width * height) - num_x - num_o)
 
-def isBoardFull(board):
-    return getNumPieces(board)[2] == 0
+def isBoardFull(board, width, height):
+    return getNumPieces(board, width, height)[2] == 0
 
 def isValidMove(board, current_player, index, undo=False):
     """
@@ -240,8 +242,8 @@ def isWin(board, move, current_player):
     """
     return False
     
-def initiateBoard(n):
-    board = [' '] * (n * n)
+def initiateBoard(width, height):
+    board = [' '] * (width * height)
     return board
 
 def getPlayerMove(n):

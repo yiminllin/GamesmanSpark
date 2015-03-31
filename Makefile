@@ -1,5 +1,5 @@
 MASTER="local[8]"
-SOLVER=SparkBeta.py
+SOLVER=SparkSolver.py
 
 .PHONY: clean
 
