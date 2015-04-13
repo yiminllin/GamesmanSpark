@@ -23,43 +23,39 @@ def opposite(letter):
 
 """
 Assigning all the wins/loses
+value = (boardState, (w/t/l, remoteValue, (Parents)))
 """
 def traceBackUpMap(value):
     retVal = []
-    if remoteness != 0:
-        if remoteness == value[1][1]:
-            if not currMod.isEmpty(value[0], width, height):
-                parents = value[1][2]
+    #If we are not at the correct remoteness level, or we have one
+    #of the conflicted mapping, move past and just append retval with
+    #current value for next go around
+    if type(value[1][1]) is int and remoteness == value[1][1]:
+        if not currMod.isEmpty(value[0], width, height):
+            parents = value[1][2]
 
-                retVal.append(value)
-
-                for parent in parents:
-                    boardInformation = [opposite(value[1][0]), remoteness + 1, ()]
-                    parentTuple = [parent, tuple(boardInformation)]
-
-                    retVal.append(tuple(parentTuple))
-        else:
             retVal.append(value)
+
+            for parent in parents:
+                boardInformation = [opposite(value[1][0]), remoteness + 1, ()]
+                parentTuple = [parent, tuple(boardInformation)]
+
+                retVal.append(tuple(parentTuple))
     else:
-        if remoteness == value[1][1]:
-            if not currMod.isEmpty(value[0], width, height):
-                parents = value[1][2]
-
-                tempTuple = [value[0], []]
-                retVal.append(value)
-
-                for parent in parents:
-                    boardInformation = [opposite(value[1][0]), remoteness + 1, ()]
-                    parentTuple = [parent, tuple(boardInformation)]
-
-                    retVal.append(tuple(parentTuple))
-
-        else:
-            retVal.append(value)
+        retVal.append(value)
 
     return retVal
 
+"""
+Possible merging of our values going down and values coming up
+Conflict between:
+    possibleValue1: (w/t/l, remoteValue, (Parents))
+    possibleValue2: (depthAway, (Children))
+"""
+
 def traceBackUpReduce(value1, value2):
+    #Checks to see if one of the values is the information
+    #from our mapping down
     if type(value1[0]) is int and type(value2[0]) is str:
         parentLst = []
         value1List = value1[1]
@@ -80,6 +76,8 @@ def traceBackUpReduce(value1, value2):
             parentLst.append(val)
         tempTuple = (value1[0], value1[1], tuple(parentLst))
         return tempTuple
+    #This is when we are only dealing with both values being on the map
+    #back up
     else:
         parentLst = []
         value1List = value1[2]
@@ -92,33 +90,42 @@ def traceBackUpReduce(value1, value2):
         boardState = ''
         remote = 1000
 
-        if value2[0] == 'w':
-            if value1[0] == 'w':
-                if value1[1] > value2[1]:
-                    remote = value2[1]
-                else:
-                    remote = value1[1]
-            boardState = 'w'
-        elif value1[0] == 'w':
-            boardState = 'w'
-            remote = value1[1]
+        gamePosition2 = value2[0]
+        gamePosition1 = value1[0]
 
-        elif value2[0] == 't':
-            if value1[0] == 't':
-                if value1[1] > value2[1]:
-                    remote = value1[1]
+        remoteness1 = value1[1]
+        remoteness2 = value2[1]
+
+        if gamePosition2 == 'w':
+            if gamePosition1 == 'w':
+                if remoteness1 > remoteness2:
+                    remote = remoteness2
                 else:
-                    remote = value2[1]
+                    remote = remoteness1
+            else:
+                remote = remoteness2
+            boardState = 'w'
+        elif gamePosition1 == 'w':
+            boardState = 'w'
+            remote = remoteness1
+        elif gamePosition2 == 't':
+            if gamePosition1 == 't':
+                if remoteness1 > remoteness2:
+                    remote = remoteness2
+                else:
+                    remote = remoteness1
+            else:
+                remote = remoteness2
             boardState = 't'
-        elif value1[0] == 't':
+        elif gamePosition1 == 't':
             boardState = 't'
-            remote = value1[1]
+            remote = remoteness1
         else:
             boardState = 'l'
-            if value1[1] > value2[1]:
-                remote = value1[1]
+            if remoteness1 > remoteness2:
+                remote = remoteness1
             else:
-                remote = value2[1]
+                remote = remoteness2
 
         tempTuple = (boardState, remote, tuple(parentLst))
         return tempTuple
@@ -131,6 +138,7 @@ def primitiveWinOrLoseMap(value):
 
 """
 Getting all the primitives
+value = (boardState, (depthAway, (children)))
 """
 def bfsMap(value):
     retVal = []
@@ -231,7 +239,7 @@ def main():
     allPrimRDD = rdd.filter(filteringPrimitives)
     
     #Output after BFS downwards
-    printBFSFunction(rdd, "Results/" + sys.argv[4] + "Output.txt")
+    printBFSFunction(rdd, "Results/" + sys.argv[4] + "FirstMappingOutput.txt")
 
     #Output of all the primitives
     printBFSFunction(allPrimRDD, "Results/" + sys.argv[4] + "Primitives.txt")
@@ -244,7 +252,7 @@ def main():
         num = rdd.filter(relevantRemote).collect()
         remoteness += 1
 
-    printTraceBackFunction(rdd, "Results/" + sys.argv[4] + "Checking.txt")
+    printTraceBackFunction(rdd, "Results/" + sys.argv[4] + "FinalMappingOutput.txt")
 
 
 

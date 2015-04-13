@@ -6,8 +6,7 @@ SOLVER=SparkSolver.py
 default: beta
 
 beta:
-	rm -rf output.txt
-	PYTHONWARNINGS="ignore" time spark-submit $(SOLVER) --master=$(MASTER)
+	PYTHONWARNINGS="ignore" time spark-submit $(SOLVER) 3 3 .ttt TicTacToe
 
 test:
 	PYTHONWARNINGS="ignore" time spark-submit SparkTest.py
@@ -15,6 +14,8 @@ test:
 ttt:
 	PYTHONWARNINGS="ignore" python TicTacToe/ttt.py
 
+connect4:
+	PYTHONWARNINGS="ignore" time spark-submit $(SOLVER) 7 6 .connect4 Connect4
 
 clean:
 	rm -rf *.pyc

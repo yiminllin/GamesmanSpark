@@ -67,8 +67,10 @@ def winner(position):
             return 'o'
 
 ## GamesmanSpark API is implemented below.
+def initiateBoard(width, height):
+    return ' ' * width * height
 
-initialPosition = ' ' * width * height
+initialPosition = initiateBoard(width, height)
 
 def generateMoves(position):
     columns = get_columns(position)
@@ -92,3 +94,45 @@ def primitive(position):
             return G.TIE
         else:
             return G.UNDECIDED
+
+def generateMove(position, width, height):
+    player = turn(position)
+    columns = getCol(position, width, height)
+    possibilities = []
+    for col in columns:
+        for i in range(height):
+            if col[i] is ' ':
+                col[i] = player
+                break
+        possibilities.append(col)
+
+    return possibilities
+
+def getCol(position, width, height):
+    retVal = []
+    for i in range(width):
+        col = []
+        for j in range(height):
+            col.append(position[i + j * height])
+        retVal.append(col)
+    return retVal
+
+def isPrimitive(position, width, height):
+    w = winner(position)
+    if w is not None:
+        return True
+    else:
+        if ' ' not in position:
+            return True
+        else:
+            return False
+
+def tie(position, width, height):
+    if ' ' not in position:
+        return 't'
+    return 'l'
+
+def isEmpty(position, width, height):
+    return ' ' * width * height == position
+
+

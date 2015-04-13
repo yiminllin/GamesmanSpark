@@ -28,6 +28,22 @@ def isPrimitive(board, width = 3, height = 3):
         return True
     if dataOnBoard[0] < 3:
         return False
+    # else:
+        # for i in range(width):
+        #     columnList =[]
+        #     for j in range(height):
+        #         columnList.append(board[i + j * width])
+        #     if columnList.count(board[i]) == height and board[i] != ' ':
+        #         return True
+
+        # for k in range(height):
+        #     rowList =[]
+        #     for l in range(width):
+        #         rowList.append(board[l + k * width])
+        #     if rowList.count(board[k]) == width and board[k] != ' ':
+        #         return True
+
+        # return False
     else:
         if board[0] != ' ':
             if board[0] == board[1] and board[0] == board[2]:
