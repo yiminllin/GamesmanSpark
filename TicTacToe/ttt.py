@@ -72,6 +72,22 @@ def isPrimitive(board, width = 3, height = 3):
                 return True
         return False
 
+def undoMoveList(board, width = 3, height = 3):
+    dataOnBoard = getNumPieces(board, width * height)
+    if dataOnBoard[0] > dataOnBoard[1]:
+        pieceToRemove = 'x'
+    else:
+        pieceToRemove = 'o'
+    retList = []
+    for i in range(width * height):
+        if board[i] == pieceToRemove:
+            dummyList = []
+            for charac in board:
+                dummyList.append(charac)
+            dummyList[i] = ' '
+            retList.append(dummyList)
+    return retList
+
 #Work on trying to make this work on arbitrary size
 def tie(board, width = 3, height = 3):
     if board[0] != ' ':
@@ -287,17 +303,20 @@ def main():
     #Testing to see if generateMove worked. It did with no
     #entires, with entry x, and with entries x and o
 
-    # boardTest = initiateBoard(3)
-    # boardTest[0] = 'x'
-    # boardTest[8] = 'o'
-    # listOfPossMoves = generateMove(boardTest)
-    # print(listOfPossMoves)
+    boardTest = initiateBoard(3, 3)
+    boardTest[0] = 'x'
+    boardTest[3] = 'x'
+    boardTest[6] = 'x'
+    boardTest[8] = 'o'
+    boardTest[7] = 'o'
+    listOfPossMoves = undoMoveList(boardTest, 3, 3)
+    print(listOfPossMoves)
 
 
     first_player = args[0]
     second_player = args[1]
     n = 3
-    board = initiateBoard(n)
+    board = initiateBoard(n, n)
     game_is_active = True
     need_move = False
     current_player = 0 # toggle player
