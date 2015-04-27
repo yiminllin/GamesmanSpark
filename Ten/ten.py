@@ -2,22 +2,22 @@ import sys
 import math
 import random
 
-def initiateBoard(width, height):
-    return [0]
+def initiateBoard(start, end):
+    return [start]
 
-def generateMove(pos, width, height):
+def generateMove(pos, start, end):
     currentNumber = pos[0]
 
-    if (currentNumber + 1 == 10):
+    if (currentNumber + 1 == end):
         return [[currentNumber + 1]]
     
     return [[currentNumber + 1], [currentNumber + 2]]
 
-def isPrimitive(pos, width, height):
-    return pos[0] == 10
+def isPrimitive(pos, start, end):
+    return pos[0] == end
 
-def tie(pos, width, height):
+def tie(pos, start, end):
     return 'l'
 
-def isEmpty(pos, width, height):
-    return pos[0] == 0
+def isEmpty(pos, start, end):
+    return pos[0] == start

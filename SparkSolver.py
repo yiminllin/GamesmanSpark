@@ -12,7 +12,8 @@ Needed:
 	-isEmpty(pos, width, height)
 """
 
-
+#Allows us to switch the game state of a board.
+#Of course a tie or draw flipped would just be itself.
 def opposite(letter):
 	if letter == 'w':
 		return 'l'
@@ -23,216 +24,149 @@ def opposite(letter):
 
 """
 Assigning all the wins/loses
-value = (boardState, (boardLevel, w/t/l, (Parents), remoteness))
-"""
-def traceBackUpMapNew(value):
-	retVal = []
-	#If we are not at the correct remoteness level, or we have one
-	#of the conflicted mapping, move past and just append retval with
-	#current value for next go around
-	if type(value[1][1]) is str and boardLevel == value[1][0]:
-		if not currMod.isEmpty(value[0], width, height):
-			parents = value[1][2]
-
-			retVal.append(value)
-
-			for parent in parents:
-				#We flip the game state and choose our parent's state based
-				#on these values
-				if not currMod.isPrimitive(parent, width, height):
-					boardInformation = [boardLevel - 1, opposite(value[1][1]), (), value[1][3] + 1]
-					parentTuple = [parent, tuple(boardInformation)]
-					retVal.append(tuple(parentTuple))
-	else:
-		retVal.append(value)
-
-	return retVal
-
-"""
-Possible merging of our values going down and values coming up
-Conflict between:
-	possibleValue1: (boardLevel, w/t/l, (Parents), remoteness)
-	possibleValue2: (boardLevel, (Children))
-"""
-
-def traceBackUpReduceNew(value1, value2):
-	#Checks to see if one of the values is the information
-	#from our mapping down
-	if type(value1[1]) is tuple and type(value2[1]) is str:
-		parentLst = []
-		value1List = value1[1]
-		for val in value1List:
-			parentLst.append(val)
-		value2List = value2[2]
-		for val in value2List:
-			parentLst.append(val)
-		tempTuple = (value1[0], value2[1], tuple(parentLst), value2[3])
-		return tempTuple
-	elif type(value2[1]) is tuple and type(value1[1]) is str:
-		parentLst = []
-		value2List = value2[1]
-		for val in value2List:
-			parentLst.append(val)
-		value1List = value1[2]
-		for val in value1List:
-			parentLst.append(val)
-		tempTuple = (value2[0], value1[1], tuple(parentLst), value1[3])
-		return tempTuple
-	#This is when we are only dealing with both values being on the map
-	#back up
-	else:
-		parentLst = []
-		value1List = value1[2]
-		for val in value1List:
-			parentLst.append(val)
-		value2List = value2[2]
-		for val in value2List:
-			parentLst.append(val)
-
-		boardState = ''
-		remote = -1
-
-		gamePosition2 = value2[1]
-		gamePosition1 = value1[1]
-
-		remoteness1 = value1[3]
-		remoteness2 = value2[3]
-
-		if gamePosition2 == 'w':
-			if gamePosition1 == 'w':
-				if remoteness1 > remoteness2:
-					remote = remoteness2
-				else:
-					remote = remoteness1
-			else:
-				remote = remoteness2
-			boardState = 'w'
-		elif gamePosition1 == 'w':
-			boardState = 'w'
-			remote = remoteness1
-		elif gamePosition2 == 't':
-			if gamePosition1 == 't':
-				if remoteness1 > remoteness2:
-					remote = remoteness2
-				else:
-					remote = remoteness1
-			else:
-				remote = remoteness2
-			boardState = 't'
-		elif gamePosition1 == 't':
-			boardState = 't'
-			remote = remoteness1
-		else:
-			boardState = 'l'
-			if remoteness1 > remoteness2:
-				remote = remoteness1
-			else:
-				remote = remoteness2
-
-		tempTuple = (max(value1[0], value2[0]), boardState, tuple(parentLst), remote)
-		return tempTuple
-
-"""
-Assigning all the wins/loses
-value = (boardState, (w/t/l, remoteValue, (Parents)))
+value = (boardState, (depthAway, gameState, remoteness, (children))
 """
 def traceBackUpMap(value):
 	retVal = []
-	#If we are not at the correct remoteness level, or we have one
-	#of the conflicted mapping, move past and just append retval with
-	#current value for next go around
-	if type(value[1][1]) is int and remoteness == value[1][1]:
+	#If we are not at the correct boardlevel, or we have one
+	#of the conflicted mappings, move past and just append retval with
+	#current value for next go around. This allows all the elements in the rdd
+	#to continue being in the rdd.
+	if type(value[1][1]) is str and boardLevel == value[1][0]:
 		if not currMod.isEmpty(value[0], width, height):
-			parents = value[1][2]
+			parents = value[1][3]
 
 			retVal.append(value)
 
+			#Go through all the parents and make sure we store them into our rdd
+			#then assign the opposit game state to the board.
 			for parent in parents:
-				#We flip the game state and choose our parent's state based
-				#on these values
-				if not currMod.isPrimitive(parent, width, height):
-					boardInformation = [opposite(value[1][0]), remoteness + 1, ()]
-					parentTuple = [parent, tuple(boardInformation)]
-					retVal.append(tuple(parentTuple))
+				#Give decreasing boardLevel so we can ensure that we continue having the rdd
+				#cycling through map/reduce until we have no more boards.
+				boardInformation = [boardLevel - 1, opposite(value[1][1]), value[1][2] + 1, ()]
+				#Tuple-fying everyingthing because we have to have immutable data structures
+				#for spark
+				parentTuple = [parent, tuple(boardInformation)]
+				retVal.append(tuple(parentTuple))
 	else:
 		retVal.append(value)
-
+	#Returning list because Spark doesn't have an emit keyword.
 	return retVal
 
 """
 Possible merging of our values going down and values coming up
 Conflict between:
-	possibleValue1: (w/t/l, remoteValue, (Parents))
-	possibleValue2: (depthAway, (Children))
+	possibleValue1: (depthAway, gameState, remoteness, (children)) <--- our new design
+	possibleValue2: (boardLevel, (Children)) <--- our old design on the way to get primitives
 """
 
+#Spark gives us the values of keys that repeat
+#For instance, if we have (5, ('a')) and (5, ('b')), the reduce stage would receive
+#either ('a') for value1 or value2 and ('b') for the other.
+#So we have to ensure we do associative and commutative operations.
 def traceBackUpReduce(value1, value2):
-	#Checks to see if one of the values is the information
-	#from our mapping down
-	if type(value1[0]) is int and type(value2[0]) is str:
+	#Checks to see if value1 or value2 is a value pair from when we were mapping downards
+	#to get the primitives.
+
+	#value[1] is either gameState or (Children) if you look at the comments above for
+	#possibleValue1/2
+
+	if type(value1[1]) is tuple and type(value2[1]) is str:
 		parentLst = []
+
+		#Add the children of one value to a communal child list
 		value1List = value1[1]
 		for val in value1List:
 			parentLst.append(val)
-		value2List = value2[2]
+		
+		#Add the children of the other value to the communal child list
+		value2List = value2[3]
 		for val in value2List:
 			parentLst.append(val)
-		tempTuple = (value2[0], value2[1], tuple(parentLst))
+		
+		#Returning a value that coincides with the new design when we traverse up
+		#We keep value1's boardLevel to keep the original boardLevel of the board state
+		#We take the game state from value2 since it is the new design
+		#We take the remoteness from value2 since it is the new design
+		#We include the parentLst as well.
+		tempTuple = (value1[0], value2[1], value2[2], tuple(parentLst))
 		return tempTuple
-	elif type(value2[0]) is int and type(value1[0]) is str:
+	elif type(value2[1]) is tuple and type(value1[1]) is str:
 		parentLst = []
+
+		#Add the children of one value to a communal child list
 		value2List = value2[1]
 		for val in value2List:
 			parentLst.append(val)
-		value1List = value1[2]
+
+		#Add the children of the other value to the communal child list
+		value1List = value1[3]
 		for val in value1List:
 			parentLst.append(val)
-		tempTuple = (value1[0], value1[1], tuple(parentLst))
+
+		#Returning a value that coincides with the new design when we traverse up
+		#We keep value2's boardLevel to keep the original boardLevel of the board state
+		#We take the game state from value1 since it is the new design
+		#We take the remoteness from value1 since it is the new design
+		#We include the parentLst as well.
+		tempTuple = (value2[0], value1[1], value1[2], tuple(parentLst))
 		return tempTuple
-	#This is when we are only dealing with both values being on the map
-	#back up
+	#This is when we are only dealing with both values being apart of the 'new' design
+	#when traversing upwards
 	else:
 		parentLst = []
-		value1List = value1[2]
+
+		#Add the children of one value to a communal child list
+		value1List = value1[3]
 		for val in value1List:
 			parentLst.append(val)
-		value2List = value2[2]
+
+		#Add the children of the other value to the communal child list
+		value2List = value2[3]
 		for val in value2List:
 			parentLst.append(val)
 
+		#We have to keep track of the board state that we are going to assign to the key
+		#and keep track of which remoteness we would want
 		boardState = ''
 		remote = -1
 
-		gamePosition2 = value2[0]
-		gamePosition1 = value1[0]
+		#Game state from both boards
+		gameState2 = value2[1]
+		gameState1 = value1[1]
 
-		remoteness1 = value1[1]
-		remoteness2 = value2[1]
+		remoteness1 = value1[2]
+		remoteness2 = value2[2]
 
-		if gamePosition2 == 'w':
-			if gamePosition1 == 'w':
-				if remoteness1 > remoteness2:
-					remote = remoteness2
-				else:
-					remote = remoteness1
+		#If one of the gamestates is a 'w', then we know the boardstate will automatically
+		#be a win. We just have to worry about remoteness at that point
+		#WE DON'T TAKE INTO ACCOUNT OF DRAWS YET. AT THE TIME OF CREATION WE DIDN'T WORRY
+		#ABOUT GAMES WITH DRAWS
+		if gameState2 == 'w':
+
+			#If both gamestates are wins then we want the minimum route to win
+			if gameState1 == 'w':
+				remote = min(remoteness2, remoteness1)
 			else:
 				remote = remoteness2
 			boardState = 'w'
-		elif gamePosition1 == 'w':
+		elif gameState1 == 'w':
 			boardState = 'w'
 			remote = remoteness1
-		elif gamePosition2 == 't':
-			if gamePosition1 == 't':
-				if remoteness1 > remoteness2:
-					remote = remoteness2
-				else:
-					remote = remoteness1
+		#If the gamestates aren't a win, but we have one that is a tie, we will treat that
+		#with higher precedence
+		elif gameState2 == 't':
+
+			#If both are ties, then we want to end the game the fastest
+			if gameState1 == 't':
+				remote = min(remoteness2, remoteness1)
 			else:
 				remote = remoteness2
 			boardState = 't'
-		elif gamePosition1 == 't':
+		elif gameState1 == 't':
 			boardState = 't'
 			remote = remoteness1
+		#Finally, we know that our gamestates are both losses
 		else:
 			boardState = 'l'
 			if remoteness1 > remoteness2:
@@ -240,19 +174,11 @@ def traceBackUpReduce(value1, value2):
 			else:
 				remote = remoteness2
 
-		tempTuple = (boardState, remote, tuple(parentLst))
+		#We choose whichever boardLevel is greatest (not sure why) and the rest has been
+		#explained
+		tempTuple = (max(value1[0], value2[0]), boardState, remote, tuple(parentLst))
 		return tempTuple
 
-"""
-Figure out the win/lose idea
-"""
-def primitiveWinOrLoseMap(value):
-	return tuple([(value[0], tuple([winner(value[0]), value[1][1]]))])
-
-def beautyMap(value):
-	return tuple([value[0][1], tuple([value[1][0], value[1][1], value[1][3], value[1][2]])])
-def pointlessReduce(value1, value2):
-	return value1
 
 """
 Getting all the primitives
@@ -260,121 +186,103 @@ value = (boardState, (depthAway, (children)))
 """
 def bfsMap(value):
 	retVal = []
+	#Check to make sure that we only find the childrens of relevant gameBoards
+	#boardLevel helps as a way to filter what tier we are on
 	if value[1][0] == boardLevel:
+		#If we are at a primitive board, we should just append that to our list instead
+		#of find their children
 		if not currMod.isPrimitive(value[0], width, height):
+			#Get a list of children
 			children = currMod.generateMove(value[0], width, height)
 
+			#Cycle through children, assigning the new boardLevel (next tier), and gives
+			#them the parents list of their parents
 			for child in children:
 				parentTuple = [boardLevel + 1, tuple( [tuple(value[0])] )]
 				childTuple = [tuple(child), tuple(parentTuple)]
 
 				retVal.append(tuple(childTuple))
+
 			retVal.append(value)
 		else:
-			tempTuple = tuple([value[0], tuple([currMod.tie(value[0], width, height), 0, value[1][1]])])
+			#Getting all the necessary information to create the new format of our values
+			#So we can differentiate between the values and know which value is what in
+			#TraceBackUpReduce
+			boardState = value[0]
+			boardLev = value[1][0]
+			gameState = currMod.tie(value[0], width, height)
+			remotenessAway = 0
+			allChildren = value[1][1]
+			#Creating the new design of our primitives for when we map back up
+			tempTuple = tuple([boardState, tuple([boardLev, gameState, remotenessAway, \
+				tuple(allChildren)])])
+
 			retVal.append(tempTuple)
 	else:
 		retVal.append(value)
+
 	return retVal
 
+"""
+possibleValue1: (depthAway, gameState, remoteness, (parents)) <--Only when we hit a primitive
+possibleValue2: (boardLevel, (parents)) <--Typical on mapping down to primitives
+"""
 def bfsReduce(value1, value2):
-	if type(value1[0]) is int and type(value2[0]) is int:
-		if value1[0] <= value2[0] :
-			allParents = []
-			for eachParent in value1[1]:
-				allParents.append(tuple(eachParent))
-			for eachParent in value2[1]:
-				allParents.append(tuple(eachParent))
-			return (value1[0], tuple(allParents))
-		else:
-			allParents = []
-			for eachParent in value1[1]:
-				allParents.append(tuple(eachParent))
-			for eachParent in value2[1]:
-				allParents.append(tuple(eachParent))
-			return (value2[0], tuple(allParents))
-	else:
-		if type(value1[0]) is int:
-			allParents = []
-			for eachParent in value1[1]:
-				allParents.append(tuple(eachParent))
-			for eachParent in value2[2]:
-				allParents.append(tuple(eachParent))
-			return (value2[0], value2[1], tuple(allParents))
-		elif type(value2[0]) is int:
-			allParents = []
-			for eachParent in value2[1]:
-				allParents.append(tuple(eachParent))
-			for eachParent in value1[2]:
-				allParents.append(tuple(eachParent))
-			return (value1[0], value1[1], tuple(allParents))
-		else:
-			return ("blank", -1, ())
-
-"""
-Getting all the primitives
-value = (boardState, (depthAway, (children)))
-"""
-def bfsMapNew(value):
-	retVal = []
-	if value[1][0] == boardLevel:
-		if not currMod.isPrimitive(value[0], width, height):
-			children = currMod.generateMove(value[0], width, height)
-
-			for child in children:
-				parentTuple = [boardLevel + 1, tuple( [tuple(value[0])] )]
-				childTuple = [tuple(child), tuple(parentTuple)]
-
-				retVal.append(tuple(childTuple))
-			retVal.append(value)
-		else:
-			tempTuple = tuple([value[0], tuple([value[1][0], currMod.tie(value[0], width, height), value[1][1], 0])])
-			retVal.append(tempTuple)
-	else:
-		retVal.append(value)
-	return retVal
-
-"""
-(depthAway, (children))
-Want the values to be (depthAway, gameState, (children), remoteness)
-"""
-def bfsReduceNew(value1, value2):
+	#Checks to see if value1 or value2 is a value pair for a primitve
+	#value[1] is either gameState or (Children) if you look at the comments above for
+	#possibleValue1/2
 	if type(value1[1]) is tuple and type(value2[1]) is tuple:
-		if value1[0] <= value2[0] :
-			allParents = []
-			for eachParent in value1[1]:
-				allParents.append(tuple(eachParent))
-			for eachParent in value2[1]:
-				allParents.append(tuple(eachParent))
-			return (value1[0], tuple(allParents))
-		else:
-			allParents = []
-			for eachParent in value1[1]:
-				allParents.append(tuple(eachParent))
-			for eachParent in value2[1]:
-				allParents.append(tuple(eachParent))
-			return (value2[0], tuple(allParents))
+		allParents = []
+
+		#Cycle through both parentLists and store in a communal list
+		for eachParent in value1[1]:
+			allParents.append(tuple(eachParent))
+
+		for eachParent in value2[1]:
+			allParents.append(tuple(eachParent))
+
+		#Return the value pair similar to the structure of
+		#possibleValue2
+		#Want the minimum most boardLevel away
+		return (min(value1[0], value2[0]), tuple(allParents))
+
+	#If we encounter a value having a primitive design structure then we have to cover
+	#Those edge cases
 	else:
 		if type(value1[1]) is tuple:
 			allParents = []
+
+			#Cycle through the parents of both structures and add to a communal list
 			for eachParent in value1[1]:
 				allParents.append(tuple(eachParent))
-			for eachParent in value2[2]:
+			for eachParent in value2[3]:
 				allParents.append(tuple(eachParent))
-			return (value2[0], value2[1], tuple(allParents), value2[3])
+			
+			#Format the new value to the primitive design specification
+			return (value2[0], value2[1], value2[2], tuple(allParents))
 		elif type(value2[0]) is tuple:
 			allParents = []
+
+			#Cycle through the parents of both structures and add to a communal list
 			for eachParent in value2[1]:
 				allParents.append(tuple(eachParent))
-			for eachParent in value1[2]:
+			for eachParent in value1[3]:
 				allParents.append(tuple(eachParent))
-			return (value1[0], value1[1], tuple(allParents), value1[3])
+
+			#Format the new value to the primitive design specification
+			return (value1[0], value1[1], value1[2], tuple(allParents))
 		else:
+			#This is in case there was something that was not thought of in our if/else
+			#conditionals
 			return ("blank", -1, ())
 
 
 """
-Assigning all the wins/loses
+UNDERCONSTRUCTION! ~Shouldn't be using remoteness as the conditional filter
+	-Should be using boardLevel. Look at traceBackUpMap
+
+
+Assigning all the wins/loses via undoMove <-- function that is useful for some games
 value = (boardState, (w/t/l, remoteValue))
 """
 def traceBackUpMapList(value):
@@ -402,6 +310,8 @@ def traceBackUpMapList(value):
 	return retVal
 
 """
+SHOULD WORK. No promises though. Wasn't extensively tested.
+
 Possible merging of our values going down and values coming up
 Conflict between:
 	possibleValue1: (w/t/l, remoteValue)
@@ -453,16 +363,10 @@ def traceBackUpReduceList(value1, value2):
 
 	tempTuple = (boardState, remote)
 	return tempTuple
-	# elif remoteness == value1[1]:
-	# 	return value1
-	# elif remoteness == value2[1]:
-	# 	return value2
-	# else:
-	# 	#raise Exception("I missed something\n" + str(value1) + "\n" + str(value2))
-	# 	return ("", -1)
-
 
 """
+Should work just fine.
+
 value = (board state, boardlevel)
 """
 def bfsMapList(value):
@@ -482,22 +386,33 @@ def bfsMapList(value):
 	return retVal
 
 def bfsReduceList(value1, value2):
+	#All we care about is the minimum boardLevel, but that will change if we get the new
+	#primitive design. 
+	#FORGOT TO TAKE INTO ACCOUNT THE PRIMITIVE DESIGN STRUCTURES
 	return min(value1, value2)
 
 
+#Function used to write all the primitives to a certain file
 def filteringPrimitives(value):
 	return currMod.isPrimitive(value[0], width, height)
 
+#Prints an rdd for us. Not entirely sure how this works. 
+#Typically used after the first map/reduce down to the primitives
 def printBFSFunction(rdd, fName):
 	#Running through the list and formatting it as level and then board set
 	outputFile = open(fName, "w")
 	writer = lambda line: outputFile.write(str(line) + "\n")
+
+	#rdd.collect() returns a list of all the elements in the rdd
 	compiledArr = rdd.collect()
+
+	#sorted sorts the list based on the lambda function
 	compiledArr = sorted(compiledArr, key = lambda value: value[1][0])
 
 	for elem in compiledArr:
 		writer(elem)
 
+#Same as printBFSFunction except we focous on the gamestate
 def printBFSListFunction(rdd, fName):
 	#Running through the list and formatting it as level and then board set
 	outputFile = open(fName, "w")
@@ -508,32 +423,22 @@ def printBFSListFunction(rdd, fName):
 	for elem in compiledArr:
 		writer(elem)
 
+#Used after the entire solving process.
 def printTraceBackFunction(rdd, fName):
 	outputFile = open(fName, "w")
 	writer = lambda line: outputFile.write(str(line) + "\n")
 	compiledArr = rdd.collect()
-	compiledArr = sorted(compiledArr, key = lambda value: value[1][1])
 
 	for elem in compiledArr:
 		writer(elem)
 
-def printTraceBackFunctionNew(rdd, fName):
-	outputFile = open(fName, "w")
-	writer = lambda line: outputFile.write(str(line) + "\n")
-	compiledArr = rdd.collect()
-	compiledArr = sorted(compiledArr, key = lambda value: value[0])
-
-	for elem in compiledArr:
-		writer(elem)
-
+#Use this to help determin when there are no new elements in our rdd
 def relevantSet(value):
 	return value[1][0] == boardLevel
 
+#Same idea as relevantSet but we take into account the design for the listRDDs
 def relevantSetList(value):
 	return value[1] == boardLevel
-
-def relevantRemote(value):
-	return value[1][1] == remoteness
 
 def main():
 	#Current board level (tier) in our bfs
@@ -562,64 +467,35 @@ def main():
 
 	num = 1
 	maxBoardLevel = 0
+	i = 0
 
 	while num:
 		maxBoardLevel = boardLevel
-		rdd = rdd.flatMap(bfsMapNew)
-		rdd = rdd.reduceByKey(bfsReduceNew)
+		rdd = rdd.flatMap(bfsMap)
+		rdd = rdd.reduceByKey(bfsReduce)
 		num = rdd.filter(relevantSet).count()
 		boardLevel += 1
+		i += 1
 	
 	#Output after BFS downwards
-	printBFSFunction(rdd, "Results/" + sys.argv[4] + "FirstMappingOutput.txt")
+	# printBFSFunction(rdd, "Results/" + sys.argv[4] + "FirstMappingOutput.txt")
 
 	allPrimRDD = rdd.filter(filteringPrimitives)
 
 	#Output of all the primitives
 	printBFSFunction(allPrimRDD, "Results/" + sys.argv[4] + "Primitives.txt")
 
-	# remoteness = 0
-	# blankBoard = currMod.initiateBoard(width, height)
-
-	# boardLevel = 0
-	# testRDD = [(tuple(blankBoard), boardLevel)]
-	# testRDD = sc.parallelize(testRDD)
-	# num = 1
-
-	# while num:
-	# 	testRDD = testRDD.flatMap(bfsMapList)
-	# 	testRDD = testRDD.reduceByKey(bfsReduceList)
-	# 	boardLevel += 1
-	# 	num = testRDD.filter(relevantSetList).count()
-	# printBFSListFunction(testRDD, "Results/" + sys.argv[4] + "Primitives2.txt")
-
-	# num = 1
-	# while num:
-	# 	testRDD = testRDD.flatMap(traceBackUpMapList)
-	# 	testRDD = testRDD.reduceByKey(traceBackUpReduceList)
-	# 	remoteness += 1
-	# 	num = testRDD.filter(relevantRemote).count()
-	# 	printBFSListFunction(testRDD, "Results/" + sys.argv[4] + "Testing" + str(remoteness) + ".txt")
-
 	num = 1
-	i = 0
 	boardLevel = maxBoardLevel - 1
 	while num:
-		rdd = rdd.flatMap(traceBackUpMapNew)
-		printTraceBackFunction(rdd, "Results/BoardLevel" + str(boardLevel) + ".txt")
-		printTraceBackFunction(rdd, "Results/" + sys.argv[4] + "Before" + str(i) + ".txt")
-		rdd = rdd.reduceByKey(traceBackUpReduceNew)
-		printTraceBackFunction(rdd, "Results/" + sys.argv[4] + "After" + str(i) + ".txt")
-		num = rdd.filter(relevantSet).collect()
+		rdd = rdd.flatMap(traceBackUpMap)
+		rdd = rdd.reduceByKey(traceBackUpReduce)
+		tempRDD = rdd.filter(relevantSet)
+		num = tempRDD.count()
 		boardLevel -= 1
-		i += 1
-	beautifiedRDD = rdd.flatMap(beautyMap)
-	printTraceBackFunctionNew(beautifiedRDD, "Results/" + sys.argv[4] + "FinalMappingOutput.txt")
 
-def flipRDD(value):
-	retval = [value[1], value[0]]
-	return tuple(retval)
-
+	rdd = rdd.sortBy(lambda value: value[1][2])
+	printTraceBackFunction(rdd, "Results/" + sys.argv[4] + "FinalMappingOutput.txt")
 
 
 if __name__ == "__main__":
