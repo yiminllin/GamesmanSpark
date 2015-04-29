@@ -440,6 +440,10 @@ def relevantSet(value):
 def relevantSetList(value):
 	return value[1] == boardLevel
 
+"""
+We need to pass into terminal the width, height, filename without .py, package name,
+local[#comps]
+"""
 def main():
 	#Current board level (tier) in our bfs
 	global boardLevel
@@ -458,7 +462,8 @@ def main():
 	global remoteness
 	remoteness = 0
 
-	sc = SparkContext("local[1]", "python")
+	#Number of local[#ofcomps]
+	sc = SparkContext(sys.argv[5], "python")
 	
 	blankBoard = currMod.initiateBoard(width, height)
 

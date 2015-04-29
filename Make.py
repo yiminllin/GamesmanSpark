@@ -1,10 +1,16 @@
 import sys
 import subprocess
-
-dictionary = {"ten": ["time", "spark-submit", "SparkSolver.py", "0", "10", ".ten", "Ten"],
-			  "ten2": ["time", "spark-submit", "SparkSolver.py", "0", "20", ".ten", "Ten"],
-			  "ttt": ["time", "spark-submit", "SparkSolver.py", "3", "3", ".ttt", "TicTacToe"],
-			  "test": ["time", "spark-submit", "SparkTest.py"]}
+"""
+Our sparksolve runs by putting spark-submit SparkSolver.py width height filename(without .py)
+packagename local[#of computers you have]<--- one if running on local computer
+"""
+dictionary = {"ten": ["time", "spark-submit", "SparkSolver.py", "0", "10", ".ten",
+			  "Ten", "local[1]"],
+			  "ten2": ["time", "spark-submit", "SparkSolver.py", "0", "20", ".ten", "Ten",
+			  "local[1]"],
+			  "ttt": ["time", "spark-submit", "SparkSolver.py", "3", "3", ".ttt", "TicTacToe",
+			  "local[1]"],
+			  "test": ["time", "spark-submit", "SparkTest.py", "local[1]"]}
 
 def main():
 	#Default game is TicTacToe
