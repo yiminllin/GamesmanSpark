@@ -4,6 +4,8 @@ import os
 import gamesman
 import collections
 
+DEBUG = False
+
 def main():
     parser = argparse.ArgumentParser(description='Locally solves games')
     parser.add_argument('game', help='The path to the game script to run.')
@@ -188,6 +190,11 @@ class Solver(object):
         else:
             print('{}refer: {}'.format(indent, root))
 
+    def print_values(self):
+        for pos, value in sorted([(pos, data.value) for pos, data in
+                                  self.position_data.items()]):
+            print(pos, value)
+
     def solve(self):
         frontier = []
         total_positions = len(self.position_data)
@@ -246,6 +253,9 @@ class Solver(object):
                 data = self.position_data[position].a_value(gamesman.DRAW)
                 self.position_data[position] = data
                 frontier.append((position, data))
+
+        if DEBUG:
+            self.print_values()
 
         return self.position_data[self.game.initialPosition].value
 
