@@ -98,6 +98,8 @@ class PositionData(collections.namedtuple('PositionDataBase',
         '''
         Compute our value from our children.
         '''
+        if self.value is not gamesman.UNDECIDED:
+            return self
         assert self.ready()
         best_value = gamesman.LOSE
         best_remoteness = -1
