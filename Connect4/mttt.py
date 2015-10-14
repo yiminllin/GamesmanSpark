@@ -63,6 +63,10 @@ def primitive(pos):
     ...           O + X + X +
     ...           X + O + X)
     'lose'
+    >>> primitive(O + O + X +
+    ...           O + X + X +
+    ...           X + X + O)
+    'lose'
     '''
     for x, y in [toLoc(i) for i in
                  findNonSpaces(pos)]:
@@ -72,7 +76,9 @@ def primitive(pos):
             (getPiece(pos, x, y + 1) == piece and
              getPiece(pos, x, y + 2) == piece) or
             (getPiece(pos, x + 1, y + 1) == piece and
-             getPiece(pos, x + 2, y + 2) == piece)):
+             getPiece(pos, x + 2, y + 2) == piece) or
+            (getPiece(pos, x - 1, y + 1) == piece and
+             getPiece(pos, x - 2, y + 2) == piece)):
             return G.LOSE
     if BLANK in pos:
         return G.UNDECIDED
