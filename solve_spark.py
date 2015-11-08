@@ -125,20 +125,22 @@ class UpPass(object):
             c, ((v, r), p) = t
             return (p, ((v, r), 1, None))
         def non_none(a, b):
-            if a is None:
+            if a == None:
                 return b
             else:
                 return a
         first = lambda a, b: a
         second = lambda a, b: b
         vs = {
-            (gamesman.LOSE, gamesman.LOSE): (gamesman.LOSE, min),
-            (gamesman.LOSE, gamesman.TIE):  (gamesman.LOSE, first),
-            (gamesman.TIE, gamesman.LOSE):  (gamesman.LOSE, second),
-            (gamesman.TIE, gamesman.TIE):  (gamesman.TIE, min),
-            (gamesman.WIN, gamesman.TIE):  (gamesman.TIE, second),
-            (gamesman.TIE, gamesman.WIN):  (gamesman.TIE, first),
-            (gamesman.WIN, gamesman.WIN):  (gamesman.WIN, max),
+            (gamesman.LOSE , gamesman.LOSE) : (gamesman.LOSE , min)    ,
+            (gamesman.LOSE , gamesman.TIE)  : (gamesman.LOSE , first)  ,
+            (gamesman.TIE  , gamesman.LOSE) : (gamesman.LOSE , second) ,
+            (gamesman.LOSE , gamesman.WIN)  : (gamesman.LOSE , first)  ,
+            (gamesman.WIN  , gamesman.LOSE) : (gamesman.LOSE , second) ,
+            (gamesman.TIE  , gamesman.TIE)  : (gamesman.TIE  , min)    ,
+            (gamesman.WIN  , gamesman.TIE)  : (gamesman.TIE  , second) ,
+            (gamesman.TIE  , gamesman.WIN)  : (gamesman.TIE  , first)  ,
+            (gamesman.WIN  , gamesman.WIN)  : (gamesman.WIN  , max)    ,
         }
         def reduce_child_vals(t1, t2):
             print('reduce', t1, t2)
@@ -151,14 +153,15 @@ class UpPass(object):
             r = f(r1, r2)
             return ((v, r), n, N)
         def done(t):
-            ((v, r), n, N) = t
+            (p, ((v, r), n, N)) = t
             return n == N
         def finish(t):
             print('finish', t)
-            ((v, r), n, N) = t
-            if v is gamesman.LOSE:
+            ((v, rc), n, N) = t
+            r = rc + 1
+            if v == gamesman.LOSE:
                 return (gamesman.WIN, r)
-            elif v is gamesman.WIN:
+            elif v == gamesman.WIN:
                 return (gamesman.LOSE, r)
             else:
                 return (v, r)
@@ -169,15 +172,15 @@ class UpPass(object):
         unsolved = down_pass.unsolved
         child_to_parent = down_pass.child_to_parent
         while not frontier.isEmpty():
-            parents_with_child_vals = frontier.leftOuterJoin(child_to_parent)
+            parents_with_child_vals = frontier.join(child_to_parent)
             parents_to_child_vals = parents_with_child_vals.map(rotate_parent_to_key)
             new_unsolved = unsolved.union(parents_to_child_vals).reduceByKey(reduce_child_vals)
             new_unsolved.cache()
             unsolved_done = new_unsolved.filter(done)
             new_unsolved_not_done = new_unsolved.filter(lambda t: not done(t))
             
-            fontier = unsolved_done.mapValues(finish)
-            fontier.cache()
+            frontier = unsolved_done.mapValues(finish)
+            frontier.cache()
 
             solved = solved.union(frontier)
             unsolved = new_unsolved_not_done
