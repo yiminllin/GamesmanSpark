@@ -113,11 +113,11 @@ class DownPass(object):
         self.down_frontier = new_down_frontier.keys()
         self.down_frontier.cache()
 
-        #print('one step down')
-        #print(self.child_to_parent.collect())
-        #print(self.unsolved.collect())
-        #print(self.solved.collect())
-        #print(self.down_frontier.collect())
+        print('one step down')
+        print('child_to_parent', self.child_to_parent.collect())
+        print('unsolved', self.unsolved.collect())
+        print('solved', self.solved.collect())
+        print('down_frontier', self.down_frontier.collect())
 
 class UpPass(object):
     def __init__(self, sc, game, down_pass):
@@ -187,6 +187,10 @@ class UpPass(object):
 
             solved.cache()
             unsolved.cache()
+            print('one step up')
+            print('frontier', frontier.collect())
+            print('solved', solved.collect())
+            print('unsolved', unsolved.collect())
 
         draws = unsolved.mapValues(unsolved_to_draw)
         solved = solved.union(draws)
