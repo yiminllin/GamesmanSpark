@@ -1,17 +1,10 @@
-import imp
-import argparse
-import os
 import gamesman
 import collections
 
 DEBUG = False
 
 def main():
-    parser = argparse.ArgumentParser(description='Locally solves games')
-    parser.add_argument('game', help='The path to the game script to run.')
-    arg = parser.parse_args()
-    name = os.path.split(os.path.splitext(arg.game)[0])[-1]
-    game = imp.load_source(name, arg.game)
+    name, game = gamesman.load_game_from_args('Solve games locally.')
     print(Solver(game).solve())
 
 def get_children(game, pos):

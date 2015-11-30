@@ -1,14 +1,7 @@
-import imp
-import argparse
-import os
 import gamesman
 
 def main():
-    parser = argparse.ArgumentParser(description='Naively solves games')
-    parser.add_argument('game', help='The path to the game script to run.')
-    arg = parser.parse_args()
-    name = os.path.split(os.path.splitext(arg.game)[0])[-1]
-    game = imp.load_source(name, arg.game)
+    name, game = gamesman.load_game_from_args('Naively solve games.')
     print(solve(game, game.initialPosition))
 
 def solve(game, pos):

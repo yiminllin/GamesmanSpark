@@ -19,11 +19,9 @@ PENDING_CHECK_INTERVAL = 0.5
 NUMBER_SIMULTANEOUS_REQUESTS = 64
 
 def consistent_hash(obj):
-    #print(repr(obj))
     m = hashlib.sha1()
     m.update(repr(obj).encode())
     result = int.from_bytes(m.digest(), 'little')
-    #print('consistent_hash({}) = {}'.format(obj, result))
     return result
 
 class KeyReducer(object):
@@ -40,13 +38,6 @@ class KeyReducer(object):
         def recv(self, data):
             rank, name, key, value = data
             reducer = self.names_to_reducer[name]
-            if rank != COMM_RANK:
-                print('correct rank', rank)
-                print('this rank', COMM_RANK)
-            if not reducer.is_local(key):
-                print('inconsistent key', key, repr(key), consistent_hash(key))
-                print('correct rank', reducer.compute_rank(key))
-                print('this rank', COMM_RANK)
             assert rank == COMM_RANK
             assert reducer.is_local(key)
             reducer.send(key, value)
@@ -175,10 +166,13 @@ class ChildValAccumulator(object):
         (gamesman.WIN  , gamesman.WIN)  : (gamesman.WIN  , max)    ,
     }
 
-    def __init__(self, child_count):
-        self.child_count = child_count
-        self.children_observed = 0
-        self.best_value = (gamesman.WIN, 0)
+    def __init__(self, count, seen=0, best=None):
+        self.child_count = count
+        self.children_observed = seen
+        self.best_value = best or (gamesman.WIN, 0)
+
+    def __repr__(self):
+        return 'ChildValAccumulator(count={!r}, seen={!r}, best={!r})'.format(self.child_count, self.children_observed, self.best_value)
 
     def update(self, child_val):
         self.children_observed += 1
@@ -201,11 +195,7 @@ class ChildValAccumulator(object):
             return (v, r + 1)
 
 def main():
-    parser = argparse.ArgumentParser(description='Naively solves games')
-    parser.add_argument('game', help='The path to the game script to run.')
-    arg = parser.parse_args()
-    name = os.path.split(os.path.splitext(arg.game)[0])[-1]
-    game = imp.load_source(name, arg.game)
+    name, game = gamesman.load_game_from_args('Solve games using MPI.')
 
     def maybePrimitive(pos):
         value = game.primitive(pos)
@@ -277,9 +267,14 @@ def main():
     @solving.foreach
     def markDraw(pos, acc):
         if not acc.done():
+            if acc.children_observed != 0:
+                print('pos', repr(pos), 'best', acc.best_value, acc.children_observed, '/', acc.child_count)
+                print('pos', repr(pos), 'children', [game.doMove(pos, m) for m in game.generateMoves(pos)])
             solved(pos, (gamesman.DRAW, gamesman.DRAW_REMOTENESS))
 
     solved.save('results/{}/solved'.format(name))
+    childToParents.save('results/{}/childToParents'.format(name))
+    solving.save('results/{}/solving'.format(name))
 
 if __name__ == '__main__':
     main()
