@@ -16,3 +16,12 @@ def generateMoves(position):
 
 def doMove(position, move):
     return position + move
+
+def toIndex(move):
+	return move
+	
+def toLoc(move):
+	return move
+	
+def printBoard(pos):
+	print(pos * "| " + (10-pos) * "* ")

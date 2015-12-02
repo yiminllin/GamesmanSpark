@@ -124,3 +124,12 @@ def doMove(position, move):
     player = getPlayer(position)
     index = toIndex(move)
     return position[:index] + player + position[index + 1:]
+
+def printBoard(pos):
+	print("=============")
+	print("| " + pos[0] + " | " + pos[1] + " | " + pos[2] + " |")
+	print("=============")
+	print("| " + pos[3] + " | " + pos[4] + " | " + pos[5] + " |")
+	print("=============")
+	print("| " + pos[6] + " | " + pos[7] + " | " + pos[8] + " |")
+	print("=============")
